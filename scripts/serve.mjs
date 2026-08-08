@@ -3,7 +3,7 @@
 //
 // Exists because opening docs/index.html with file:// does not work: the page
 // is an ES module and fetches prices.json, both of which browsers block over
-// file://. No dependency needed for this — node's http module is enough.
+// file://. No dependency is needed, because node's http module is enough.
 
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
@@ -28,7 +28,7 @@ createServer(async (req, res) => {
   const rel = normalize(decodeURIComponent(url.pathname)).replace(/^([/\\])+/, '');
   const path = join(ROOT, rel === '' ? 'index.html' : rel);
 
-  // Refuse anything that climbed out of docs/ — this binds to localhost, but a
+  // Refuse anything that climbed out of docs/. This binds to localhost, but a
   // path-traversal hole in a dev server is still a path-traversal hole.
   if (!path.startsWith(ROOT)) {
     res.writeHead(403).end('Forbidden');

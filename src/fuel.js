@@ -11,7 +11,7 @@
 // is not something this project does.
 //
 // The club page at /club/<id> needs none of that. It is a public, indexable
-// page — robots.txt disallows /cart, /checkout and /account, but not /club —
+// page. robots.txt disallows /cart, /checkout and /account, but not /club,
 // and it answers a plain GET with no cookies, no custom headers and no
 // user-agent spoofing. It also server-renders the prices into the HTML, so
 // there is no JavaScript to run.
@@ -20,7 +20,7 @@
 //
 // Sam's sends no Access-Control-Allow-Origin header, and answers 403 outright
 // to a request carrying an Origin. So a static page cannot fetch this itself at
-// any point — the browser blocks it. The scheduled job in
+// any point, because the browser blocks it. The scheduled job in
 // .github/workflows/update-prices.yml does the fetching and commits the result,
 // and the page only ever reads that committed file from its own origin.
 //
@@ -34,7 +34,7 @@
 const MARKER = '"storeFuelPrices"';
 
 // A parsed price outside this range means we matched something that isn't a
-// fuel price — a version number, a product, a restructured payload. Better to
+// fuel price, such as a version number or a restructured payload. Better to
 // report nothing than to send someone to a pump with a fabricated number.
 const MIN_PRICE = 0.5;
 const MAX_PRICE = 25;
@@ -76,9 +76,10 @@ export function sliceJsonObject(text, start) {
  * The club whose prices a payload actually describes.
  *
  * The id looks like "CPF_FUELPRICE_PROD_4769". Checking it is what makes a
- * redirect — to a nearby club, or to a generic page — fail loudly instead of
- * quietly attributing one club's prices to another. That is the failure mode
- * worth engineering against here: a wrong price is worse than no price.
+ * redirect, whether to a nearby club or to a generic page, fail loudly
+ * instead of quietly attributing one club's prices to another. That is the
+ * failure mode worth engineering against here: a wrong price is worse than
+ * no price.
  */
 export function clubIdFrom(id) {
   const m = typeof id === 'string' ? id.match(/(\d+)\s*$/) : null;
@@ -112,8 +113,8 @@ function normalisePrices(raw) {
 /**
  * Pulls the fuel block out of a club page.
  *
- * Returns null rather than throwing when the page simply has no fuel block —
- * not every club sells fuel, and that is an ordinary answer, not an error.
+ * Returns null rather than throwing when the page simply has no fuel block.
+ * Not every club sells fuel, and that is an ordinary answer, not an error.
  * Throws only when the page contradicts itself, i.e. it carries prices for a
  * club we did not ask about.
  */
@@ -167,7 +168,7 @@ export function isStale(updatedAt, staleAfterHours, now = Date.now()) {
 /**
  * Merges a fresh round of readings over the previous snapshot.
  *
- * A club that failed this round keeps its last good reading — flagged with the
+ * A club that failed this round keeps its last good reading, flagged with the
  * error, so the page can say "couldn't refresh" while still showing yesterday's
  * price. Blanking a card because one fetch was truncated would be a worse
  * answer than a slightly old one, and truncated fetches do happen.

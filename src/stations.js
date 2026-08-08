@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// THE CLUBS THIS SITE TRACKS — the only file you need to edit to change them.
+// THE CLUBS THIS SITE TRACKS. This is the only file you need to edit.
 //
 // `club`   Sam's Club number, the last path segment of the club URL:
 //          https://www.samsclub.com/club/4769  ->  club: 4769
@@ -26,6 +26,6 @@ export const STATIONS = [
 //
 // A price is therefore normally at most ~24h old, and this leaves about six
 // hours of grace before one is called stale. It flags a batch that never landed
-// rather than the ordinary overnight gap. A stale price is still shown — an old
-// number you can judge beats a blank one — but never as if it were current.
+// rather than the ordinary overnight gap. A stale price is still shown, because
+// an old number you can judge beats a blank one, but never as if it were current.
 export const STALE_AFTER_HOURS = 30;

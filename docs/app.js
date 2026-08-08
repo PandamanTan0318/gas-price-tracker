@@ -3,7 +3,7 @@
 //
 // There is no fetching of Sam's here and there cannot be: they send no CORS
 // header and 403 anything carrying an Origin. This file only ever reads a
-// same-origin JSON file, which is also why the page has no refresh button —
+// same-origin JSON file. That is also why the page has no refresh button:
 // pressing one could not produce a newer number than the last committed run.
 
 const el = (id) => document.getElementById(id);
@@ -66,7 +66,7 @@ const clock = (d) =>
 
 /**
  * When a price was published. Prices land in one daily batch, so the useful
- * question is which day's batch this is — "yesterday" is the signal that
+ * question is which day's batch this is. "Yesterday" is the signal that
  * something was missed, and a bare clock time would hide it.
  */
 function fmtWhen(iso) {
@@ -162,8 +162,8 @@ function renderCards() {
     const delta = node.querySelector('[data-delta]');
     delta.textContent = isBest && rows.length > 1 ? 'Cheapest' : fmtDelta(price, best);
 
-    // A stale or errored price is still shown — an old number you can judge
-    // beats a blank card — but it is never allowed to look current.
+    // A stale or errored price is still shown, because an old number you can
+    // judge beats a blank card. It is never allowed to look current, though.
     const note = node.querySelector('[data-note]');
     const stale = isStale(station.updatedAt);
     if (!station.prices?.length) {

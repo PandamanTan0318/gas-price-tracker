@@ -6,7 +6,7 @@
 // ever read the committed result from its own origin.
 //
 // Writing a file that gets committed means the git history doubles as a price
-// log for free, which is why the JSON is pretty-printed — a one-line file would
+// log for free, which is why the JSON is pretty-printed. A one-line file would
 // make every diff useless.
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
@@ -25,9 +25,10 @@ const CLUB_PAGE = 'https://www.samsclub.com/club';
  * One club's current prices.
  *
  * Retries once on a miss because the failure actually seen in practice is a
- * truncated response, not a rejection — the page comes back 200 with the fuel
- * block cut off. A club-id mismatch is deterministic, so that one breaks out
- * immediately rather than spending a second request on the same wrong answer.
+ * truncated response rather than a rejection. The page comes back 200 with
+ * the fuel block cut off. A club-id mismatch is deterministic, so that one
+ * breaks out immediately rather than spending a second request on the same
+ * wrong answer.
  */
 async function readClub(club) {
   let lastError = null;
@@ -105,8 +106,8 @@ for (const s of file.stations) {
   console.log(`${String(s.club).padEnd(6)} ${prices.padEnd(40)} ${s.error ?? ''}`);
 }
 
-// A round where every club failed is systemic — a blocked runner, a
-// restructured page — and should fail the job loudly rather than quietly
+// A round where every club failed is systemic, such as a blocked runner or a
+// restructured page, and should fail the job loudly rather than quietly
 // committing a snapshot of nothing. Individual failures are fine: those clubs
 // keep their previous price and the page marks them.
 if (!file.stations.some((s) => s.prices.length)) {
