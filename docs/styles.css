@@ -11,7 +11,7 @@
   --line-soft: rgba(240, 240, 242, 0.07);
   --fill-ghost: rgba(240, 240, 242, 0.06);
 
-  --accent: #a78bfa;
+  --accent: #5b9cff;
 
   --clear: #37d67a;
   --clear-tint: rgba(55, 214, 122, 0.16);
@@ -64,24 +64,28 @@ body {
   border-bottom: 1px solid var(--line-soft);
 }
 
-.top-left { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+/* Stacked rather than side by side: the title is long enough that setting it
+   beside the tagline would push the timestamp off a phone screen. */
+.top-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
 
 .wordmark {
-  font: 500 15px/1 var(--mono);
-  letter-spacing: 0.22em;
+  font: 500 12px/1.35 var(--mono);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--accent);
-  white-space: nowrap;
 }
 
 .tagline {
-  font: 400 10px/1 var(--mono);
-  letter-spacing: 0.14em;
+  font: 400 9px/1 var(--mono);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-ghost);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .updated-block {
@@ -245,6 +249,8 @@ body {
 }
 
 @media (min-width: 1024px) {
+  .wordmark { font-size: 14px; letter-spacing: 0.16em; white-space: nowrap; }
+  .tagline { font-size: 10px; }
   .card { padding: 16px 18px; }
   .price { font-size: 30px; }
   .delta { font-size: 14px; min-width: 86px; }
