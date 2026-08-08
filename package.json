@@ -1,0 +1,15 @@
+{
+  "name": "sams-gas-prices",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Current fuel prices at four Houston-area Sam's Club locations, cheapest first. Static site on GitHub Pages, fed by a scheduled GitHub Action.",
+  "type": "module",
+  "scripts": {
+    "fetch": "node scripts/fetch-prices.mjs",
+    "test": "node scripts/test-fuel.mjs",
+    "serve": "node scripts/serve.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

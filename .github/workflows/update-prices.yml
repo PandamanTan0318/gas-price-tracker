@@ -1,0 +1,62 @@
+# Fetches the club pages and commits docs/prices.json, which is the only way
+# this site gets data: Sam's sends no CORS header and 403s a request carrying an
+# Origin, so the page itself can never fetch them.
+#
+# Sam's publishes in one daily batch at roughly 08:18 UTC. 08:40 catches that
+# with room to spare, and 14:40 is a second pass for a club that published late.
+# GitHub's scheduler is best-effort and can run several minutes behind, which
+# does not matter for a number that changes once a day.
+
+name: Update prices
+
+on:
+  schedule:
+    - cron: '40 8 * * *'
+    - cron: '40 14 * * *'
+  # So you can force a run from the Actions tab without waiting for the clock,
+  # which is also how you seed the very first prices.json.
+  workflow_dispatch:
+
+# The job commits back to the repo, which the default read-only token cannot do.
+permissions:
+  contents: write
+
+# Two runs overlapping would race on the same file for no benefit.
+concurrency:
+  group: update-prices
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # No dependencies to install: the script uses only built-in Node APIs.
+      - name: Fetch prices
+        run: node scripts/fetch-prices.mjs
+
+      - name: Commit if anything changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/prices.json
+          # Every run rewrites `fetchedAt`, so the file always differs even when
+          # no price moved. Committing that daily would bury real price changes
+          # in noise, so a run that only moved the timestamp is discarded.
+          if git diff --staged --quiet; then
+            echo "No change."
+            exit 0
+          fi
+          if [ -z "$(git diff --staged -U0 -- docs/prices.json | grep -E '^[+-]' | grep -vE '^[+-]{3}' | grep -v '"fetchedAt"' | grep -v '"checkedAt"')" ]; then
+            echo "Only the checked-at timestamps moved; not committing."
+            git restore --staged docs/prices.json
+            exit 0
+          fi
+          git commit -m "Prices for $(date -u +%Y-%m-%d)"
+          git push

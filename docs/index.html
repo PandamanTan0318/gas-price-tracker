@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Houston Club Gas Prices</title>
+<meta name="description" content="Current fuel prices at four Houston-area Sam's Club locations, cheapest first. Unofficial.">
+<meta name="theme-color" content="#0b0b0c">
+<meta name="color-scheme" content="dark light">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="top-left">
+    <span class="wordmark">Club Gas</span>
+    <span class="tagline">Houston area</span>
+  </div>
+  <div class="top-right">
+    <span class="updated-block">
+      <span class="updated-label">Prices from</span>
+      <span id="updated" class="updated-value">&#8212;</span>
+    </span>
+  </div>
+</header>
+
+<main class="main">
+  <div id="grades" class="grades" role="tablist" aria-label="Fuel grade"></div>
+
+  <div id="cards" class="cards"></div>
+
+  <p id="empty" class="empty" hidden>No prices available right now.</p>
+  <p id="error" class="error" hidden></p>
+
+  <footer class="foot">
+    <p class="foot-note">
+      <strong>Unofficial.</strong> Not affiliated with, endorsed by, or operated by
+      Sam&#8217;s Club or Walmart. Prices are read from each club&#8217;s public page
+      once a day and may be out of date &#8212; <strong>the pump is authoritative.</strong>
+      Members-only fuel; check your club&#8217;s terms.
+    </p>
+    <p class="foot-note">
+      Source: <a href="https://www.samsclub.com" target="_blank" rel="noopener nofollow">samsclub.com</a>
+      club pages · <span id="checked" class="checked"></span>
+    </p>
+  </footer>
+</main>
+
+<template id="card-tpl">
+  <article class="card">
+    <div class="card-main">
+      <div class="card-id">
+        <span class="name" data-label></span>
+        <span class="note" data-note hidden></span>
+      </div>
+      <div class="price-wrap">
+        <span class="price">
+          <span data-dollars>&#8212;</span><span class="ninth" data-ninth></span>
+        </span>
+        <span class="delta" data-delta></span>
+      </div>
+    </div>
+    <div class="card-sub">
+      <span class="others" data-others></span>
+    </div>
+  </article>
+</template>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>

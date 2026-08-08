@@ -1,0 +1,9 @@
+# Normalise line endings so the repo stays identical across Windows, macOS,
+# Linux, and the GitHub web editor.
+#
+# This is load-bearing, not cosmetic: update-prices.yml carries a bash `run`
+# block, and CRLF committed from Windows would leave a trailing \r on every
+# line of that script when it runs on an Ubuntu runner.
+* text=auto eol=lf
+
+*.png binary
