@@ -8,6 +8,7 @@ import {
   parseClubPage,
   isStale,
   mergeSnapshot,
+  pricesChanged,
 } from '../src/fuel.js';
 
 let passed = 0;
@@ -142,22 +143,44 @@ test('falls back to the internal name when displayName is missing', () => {
 const HOUR = 3_600_000;
 const NOW = Date.parse('2026-08-03T12:00:00Z');
 
-test('a reading from this morning is fresh', () => {
-  assert.equal(isStale('2026-08-03T08:18:00Z', 30, NOW), false);
+test('a reading from the last scheduled run is fresh', () => {
+  assert.equal(isStale('2026-08-03T08:40:00Z', 14, NOW), false);
 });
 
 test('a reading from two days ago is stale', () => {
-  assert.equal(isStale('2026-08-01T08:18:00Z', 30, NOW), true);
+  assert.equal(isStale('2026-08-01T08:40:00Z', 14, NOW), true);
 });
 
 test('an absent or unparseable timestamp counts as stale', () => {
-  assert.equal(isStale(null, 30, NOW), true);
-  assert.equal(isStale('not a date', 30, NOW), true);
+  assert.equal(isStale(null, 14, NOW), true);
+  assert.equal(isStale('not a date', 14, NOW), true);
 });
 
 test('the boundary is the configured window, not a hardcoded day', () => {
-  assert.equal(isStale(new Date(NOW - 29 * HOUR).toISOString(), 30, NOW), false);
-  assert.equal(isStale(new Date(NOW - 31 * HOUR).toISOString(), 30, NOW), true);
+  assert.equal(isStale(new Date(NOW - 13 * HOUR).toISOString(), 14, NOW), false);
+  assert.equal(isStale(new Date(NOW - 15 * HOUR).toISOString(), 14, NOW), true);
+});
+
+// ---- change detection -----------------------------------------------------
+
+const list = (...prices) => prices.map((price, i) => ({ grade: `G${i}`, price }));
+
+test('a moved price reads as a change', () => {
+  assert.equal(pricesChanged(list(3.299), list(3.199)), true);
+});
+
+test('an identical list reads as no change', () => {
+  assert.equal(pricesChanged(list(3.299, 4.249), list(3.299, 4.249)), false);
+});
+
+// A grade appearing or disappearing is as much a change as a price moving.
+test('a different number of grades reads as a change', () => {
+  assert.equal(pricesChanged(list(3.299), list(3.299, 3.899)), true);
+  assert.equal(pricesChanged([], list(3.299)), true);
+});
+
+test('the same price under a different grade reads as a change', () => {
+  assert.equal(pricesChanged([{ grade: 'Unleaded', price: 3.299 }], [{ grade: 'Premium', price: 3.299 }]), true);
 });
 
 // ---- snapshot merging -----------------------------------------------------
@@ -185,16 +208,36 @@ test('a failed club keeps its last good price and records the error', () => {
     [{ club: 4769, prices: [], updatedAt: null, error: 'truncated' }],
     't2'
   );
-  assert.equal(after.clubs['4769'].prices[0].price, 3.379, 'yesterday’s price survives');
+  assert.equal(after.clubs['4769'].prices[0].price, 3.379, 'the earlier price survives');
   assert.equal(after.clubs['4769'].updatedAt, '2026-08-03T08:18:00Z', 'and keeps its own timestamp');
   assert.equal(after.clubs['4769'].error, 'truncated');
-  assert.equal(after.clubs['4769'].checkedAt, 't2', 'but records that we did look');
+});
+
+// checkedAt drives the stale badge, so it has to mean "last confirmed", not
+// "last attempted". If a failed round advanced it, a club that stopped
+// answering would keep looking freshly checked for as long as the job ran.
+test('a failed club does not advance its checkedAt', () => {
+  const before = mergeSnapshot(null, [reading(4769, 3.379)], 't1');
+  const after = mergeSnapshot(
+    before,
+    [{ club: 4769, prices: [], updatedAt: null, error: 'truncated' }],
+    't2'
+  );
+  assert.equal(after.clubs['4769'].checkedAt, 't1');
+  assert.equal(after.fetchedAt, 't2', 'the run itself is still recorded');
+});
+
+test('a successful club advances its checkedAt', () => {
+  const before = mergeSnapshot(null, [reading(4769, 3.379)], 't1');
+  const after = mergeSnapshot(before, [reading(4769, 3.379)], 't2');
+  assert.equal(after.clubs['4769'].checkedAt, 't2', 'confirmed again, even unchanged');
 });
 
 test('a club that has never succeeded reports the error with no prices', () => {
   const out = mergeSnapshot(null, [{ club: 8274, prices: [], updatedAt: null, error: 'boom' }], 't1');
   assert.deepEqual(out.clubs['8274'].prices, []);
   assert.equal(out.clubs['8274'].error, 'boom');
+  assert.equal(out.clubs['8274'].checkedAt, null, 'never confirmed, so never fresh');
 });
 
 test('a club dropped from the config falls out of the snapshot', () => {

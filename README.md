@@ -7,8 +7,9 @@ It is a static page on GitHub Pages. A scheduled GitHub Action collects the
 prices. There is no server, no API key, no build step, and no dependencies.
 
 **Unofficial.** This project is not affiliated with, endorsed by, or operated by
-Sam's Club or Walmart. Prices are read once a day from each club's own public
-page, so they can be out of date. The pump is the authority on what you pay.
+Sam's Club or Walmart. Prices are read every six hours from each club's own
+public page, so they can be out of date. The pump is the authority on what you
+pay.
 
 ## Why the prices are collected in CI
 
@@ -62,28 +63,57 @@ card.
 
 ## Schedule
 
-Sam's publishes prices in one batch each day at about 08:18 UTC, which held
-true on consecutive days for every club checked. The workflow runs shortly
-after:
+The workflow runs every six hours:
 
 ```yaml
-- cron: '40 8 * * *'   # just after the daily batch
-- cron: '40 14 * * *'  # second pass for a club that published late
+- cron: '40 2,8,14,20 * * *'
 ```
 
-GitHub's scheduler is best effort and can run several minutes late. That does
-not matter for a number that changes once a day.
+Prices move during the day, not once overnight. On 8 August 2026 club 8246 read
+3.29⁹ in the morning and 3.19⁹ that evening. A single morning run would have
+shown the earlier number for the rest of the day.
 
-Two rules keep the history clean. A run that only changed the `fetchedAt`
-timestamp is not committed, because otherwise real price changes would be
-buried under daily no-op commits. A run where every club failed exits with an
-error instead of committing an empty snapshot.
+Cron in GitHub Actions is UTC and does not follow daylight saving, so the local
+times shift by an hour in winter. The scheduler is also best effort and can run
+several minutes late, which the six-hour spacing absorbs.
 
-The header on the page says "Prices from", not "last updated", because it shows
-when Sam's published the numbers. When the job last checked is a separate
-question, and it appears in the footer. Any price older than 30 hours, which is
-about six hours past the normal overnight gap, still appears but is marked
-stale.
+A run where every club failed exits with an error instead of committing an
+empty snapshot.
+
+### Why the page says "checked" and not "prices from"
+
+The payload carries a `metadata.dateCreated` field, and it is tempting to treat
+it as the time the price was set. It is not. On the day above it stayed at
+`08:20:45.234Z` across both readings while the price itself moved ten cents. It
+marks when the day's fuel record was created, and it holds still while the
+numbers inside it change.
+
+So the site does not claim to know when a price was set. It reports `checkedAt`,
+which is when the job last confirmed that club's price against the club page.
+That field advances only on a successful read, so a club that stops answering
+ages out and gets marked stale rather than looking freshly checked because the
+job happened to run. Anything past 14 hours, meaning two scheduled runs in a
+row failed to confirm it, is still shown but marked.
+
+The footer reports the job's last run. Normally it matches the header. A gap
+between them means the schedule is firing but some club is not coming back.
+
+### Commit history
+
+Every run commits, including runs where no price moved, because the page reads
+`checkedAt` out of the committed file and a run that skipped committing would
+leave a working job looking broken.
+
+The commit subject carries the difference instead, so the price history is one
+grep away:
+
+```bash
+git log --grep='^Price change'
+```
+
+A run that found new prices is committed as `Price changes at 3 clubs (...)`
+with the before and after for each club in the body. A run that found none is
+committed as `No change at (...)`.
 
 ## Setup
 
@@ -115,7 +145,7 @@ club list that could fall out of step.
 ```bash
 npm run serve     # http://localhost:4173
 npm run fetch     # rewrite docs/prices.json from the live club pages
-npm test          # 23 unit tests, no network access
+npm test          # 29 unit tests, no network access
 ```
 
 There are no dependencies, so `npm install` is not needed. Node 18 or newer.
@@ -126,12 +156,16 @@ Use `npm run serve` instead.
 
 ## Tests
 
-There are 23 tests on [`src/fuel.js`](src/fuel.js). They use no network and no
+There are 29 tests on [`src/fuel.js`](src/fuel.js). They use no network and no
 DOM. They cover brace matching the price payload out of a large HTML file while
 respecting quoted strings and escapes, rejecting prices that belong to a
-different club, rejecting implausible numbers, the staleness cutoff, and
-keeping the last good price when a fetch fails.
+different club, rejecting implausible numbers, the staleness cutoff, detecting
+which prices moved between two runs, and keeping the last good price when a
+fetch fails.
 
-The club mismatch test is the important one. Showing one club's price under
-another club's name would send someone to the wrong pump expecting the wrong
-number, so that case fails loudly rather than quietly.
+Two of them matter more than the rest. The club mismatch test: showing one
+club's price under another club's name would send someone to the wrong pump
+expecting the wrong number, so that case fails loudly rather than quietly. And
+the test that a failed round does not advance `checkedAt`: if it did, a club
+that stopped answering would keep looking freshly checked forever, which is the
+same class of mistake as trusting `dateCreated`.

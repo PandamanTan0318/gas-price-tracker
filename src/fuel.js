@@ -154,13 +154,15 @@ export function parseClubPage(html, expectedClub) {
 }
 
 /**
- * True once a reading is old enough that it should be shown as stale. Sam's
- * republishes daily, so anything past ~30h means a batch was missed and the
- * number on the card may no longer be the number on the pump.
+ * True once a reading is old enough that it should be shown as stale.
+ *
+ * Measured from when we last confirmed the price against the club page, not
+ * from the payload's own dateCreated. See the note on mergeSnapshot: that field
+ * does not move when a price moves, so it cannot answer "is this still true".
  */
-export function isStale(updatedAt, staleAfterHours, now = Date.now()) {
-  if (!updatedAt) return true;
-  const t = Date.parse(updatedAt);
+export function isStale(checkedAt, staleAfterHours, now = Date.now()) {
+  if (!checkedAt) return true;
+  const t = Date.parse(checkedAt);
   if (!Number.isFinite(t)) return true;
   return now - t > staleAfterHours * 3_600_000;
 }
@@ -169,9 +171,22 @@ export function isStale(updatedAt, staleAfterHours, now = Date.now()) {
  * Merges a fresh round of readings over the previous snapshot.
  *
  * A club that failed this round keeps its last good reading, flagged with the
- * error, so the page can say "couldn't refresh" while still showing yesterday's
+ * error, so the page can say "couldn't refresh" while still showing the older
  * price. Blanking a card because one fetch was truncated would be a worse
  * answer than a slightly old one, and truncated fetches do happen.
+ *
+ * WHY checkedAt IS THE FRESHNESS FIELD, AND updatedAt IS NOT
+ *
+ * updatedAt is the payload's metadata.dateCreated, and it is not the time the
+ * price was set. Observed on 8 Aug 2026: club 8246 read 3.299 in the morning
+ * and 3.199 that evening, while dateCreated stayed at 08:20:45.234Z through
+ * both. It marks when the day's fuel record was created, and it sits still
+ * while the numbers inside it move.
+ *
+ * So freshness has to come from our own side: checkedAt is when this club's
+ * price was last confirmed against the club page. It moves only on a
+ * successful read. A club whose fetches keep failing therefore ages out and is
+ * marked stale, instead of looking freshly checked because the job ran.
  */
 export function mergeSnapshot(previous, readings, fetchedAt) {
   const before = previous?.clubs ?? {};
@@ -193,15 +208,24 @@ export function mergeSnapshot(previous, readings, fetchedAt) {
     }
 
     clubs[key] = last
-      ? { ...last, checkedAt: fetchedAt, error: reading.error ?? last.error ?? null }
+      ? { ...last, error: reading.error ?? last.error ?? null }
       : {
           club: reading.club,
           prices: [],
           updatedAt: null,
-          checkedAt: fetchedAt,
+          checkedAt: null,
           error: reading.error ?? 'No fuel prices published for this club.',
         };
   }
 
   return { fetchedAt, clubs };
+}
+
+/**
+ * True when two price lists differ in grade, ordering or value. Used to tell a
+ * run that found a new price from one that merely looked again.
+ */
+export function pricesChanged(before = [], after = []) {
+  if (before.length !== after.length) return true;
+  return before.some((p, i) => p.grade !== after[i].grade || p.price !== after[i].price);
 }

@@ -2,17 +2,24 @@
 # this site gets data: Sam's sends no CORS header and 403s a request carrying an
 # Origin, so the page itself can never fetch them.
 #
-# Sam's publishes in one daily batch at roughly 08:18 UTC. 08:40 catches that
-# with room to spare, and 14:40 is a second pass for a club that published late.
-# GitHub's scheduler is best-effort and can run several minutes behind, which
-# does not matter for a number that changes once a day.
+# Every six hours, anchored on the original 08:40 UTC slot. Prices move during
+# the day, so a single morning run can show a number that stopped being true
+# hours before you pull up to the pump.
+#
+# These are UTC and do not follow daylight saving, so the local times shift by
+# an hour in winter. GitHub's scheduler is also best-effort and can run several
+# minutes late, which the six-hour spacing absorbs.
 
 name: Update prices
 
 on:
   schedule:
-    - cron: '40 8 * * *'
-    - cron: '40 14 * * *'
+    #        UTC          CDT (summer)     CST (winter)
+    #        02:40        21:40 prev day   20:40 prev day
+    #        08:40        03:40            02:40
+    #        14:40        09:40            08:40
+    #        20:40        15:40            14:40
+    - cron: '40 2,8,14,20 * * *'
   # So you can force a run from the Actions tab without waiting for the clock,
   # which is also how you seed the very first prices.json.
   workflow_dispatch:
@@ -39,24 +46,33 @@ jobs:
 
       # No dependencies to install: the script uses only built-in Node APIs.
       - name: Fetch prices
+        id: fetch
         run: node scripts/fetch-prices.mjs
 
-      - name: Commit if anything changed
+      # Every run commits, including ones where no price moved. The page reads
+      # `checkedAt` out of this file to decide whether a price is still being
+      # confirmed, and a run that does not commit leaves that timestamp behind
+      # and makes a working job look broken. The commit subject carries the
+      # difference instead, so the price history is still one grep away:
+      #
+      #   git log --grep='^Price change'
+      - name: Commit
+        env:
+          # Via the environment rather than inline ${{ }}, so the message is
+          # never spliced into the script as shell syntax.
+          MESSAGE: ${{ steps.fetch.outputs.message }}
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/prices.json
-          # Every run rewrites `fetchedAt`, so the file always differs even when
-          # no price moved. Committing that daily would bury real price changes
-          # in noise, so a run that only moved the timestamp is discarded.
           if git diff --staged --quiet; then
-            echo "No change."
+            echo "Nothing to commit."
             exit 0
           fi
-          if [ -z "$(git diff --staged -U0 -- docs/prices.json | grep -E '^[+-]' | grep -vE '^[+-]{3}' | grep -v '"fetchedAt"' | grep -v '"checkedAt"')" ]; then
-            echo "Only the checked-at timestamps moved; not committing."
-            git restore --staged docs/prices.json
-            exit 0
-          fi
-          git commit -m "Prices for $(date -u +%Y-%m-%d)"
-          git push
+          # git refuses an empty message, and a missing step output should not
+          # be what fails an otherwise good run.
+          git commit -m "${MESSAGE:-Prices at $(date -u '+%Y-%m-%d %H:%M') UTC}"
+          # The concurrency group keeps two runs apart, but it cannot stop a
+          # push landing from elsewhere between the checkout and here. Four runs
+          # a day makes that worth one retry rather than a red X.
+          git push || { git pull --rebase && git push; }

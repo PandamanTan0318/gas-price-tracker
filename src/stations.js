@@ -20,12 +20,12 @@ export const STATIONS = [
   { club: 6338, label: 'College Station' },
 ];
 
-// Sam's publishes prices in a single daily batch at roughly 08:18 UTC, observed
-// on consecutive days across every club checked. The workflow runs just after
-// that rather than polling through the day.
+// Prices change during the day, not once overnight. Club 8246 was read at
+// 3.199 in the evening of 8 Aug 2026 after reading 3.299 that morning. So the
+// workflow polls every six hours rather than catching a single morning batch.
 //
-// A price is therefore normally at most ~24h old, and this leaves about six
-// hours of grace before one is called stale. It flags a batch that never landed
-// rather than the ordinary overnight gap. A stale price is still shown, because
-// an old number you can judge beats a blank one, but never as if it were current.
-export const STALE_AFTER_HOURS = 30;
+// A reading is therefore normally at most six hours old. Fourteen hours means
+// two scheduled runs in a row failed to confirm it, which is a real fault
+// rather than an ordinary gap. A stale price is still shown, because an old
+// number you can judge beats a blank one, but never as if it were current.
+export const STALE_AFTER_HOURS = 14;

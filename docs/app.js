@@ -23,7 +23,7 @@ const GRADE_KEY = 'grade';
 // Kept in step with STALE_AFTER_HOURS in src/stations.js. Duplicated rather
 // than imported because the page is plain static files with no build step, and
 // one number is a cheaper duplication than a bundler.
-const STALE_AFTER_HOURS = 30;
+const STALE_AFTER_HOURS = 14;
 
 const state = {
   stations: [],
@@ -65,9 +65,10 @@ const clock = (d) =>
     .replace(/[\s  ]+(?=[ap]\.?m\.?$)/i, ' ');
 
 /**
- * When a price was published. Prices land in one daily batch, so the useful
- * question is which day's batch this is. "Yesterday" is the signal that
- * something was missed, and a bare clock time would hide it.
+ * When something happened, at the resolution that is useful. Within today a
+ * clock time is what you want, since the job runs every six hours. Anything
+ * older is the signal that a run was missed, and a bare clock time would hide
+ * it, so it says so.
  */
 function fmtWhen(iso) {
   if (!iso) return '';
@@ -83,9 +84,12 @@ function fmtWhen(iso) {
   return then.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
-function isStale(updatedAt) {
-  if (!updatedAt) return false;
-  const t = Date.parse(updatedAt);
+// Measured from checkedAt, when the job last confirmed this club's price
+// against the club page. Not from the payload's own updatedAt: that timestamp
+// holds still while the price underneath it moves, so it cannot say whether a
+// number is still true. See the note on mergeSnapshot in src/fuel.js.
+function isStale(station) {
+  const t = Date.parse(station?.checkedAt ?? '');
   if (!Number.isFinite(t)) return false;
   return Date.now() - t > STALE_AFTER_HOURS * 3_600_000;
 }
@@ -165,17 +169,18 @@ function renderCards() {
     // A stale or errored price is still shown, because an old number you can
     // judge beats a blank card. It is never allowed to look current, though.
     const note = node.querySelector('[data-note]');
-    const stale = isStale(station.updatedAt);
     if (!station.prices?.length) {
       card.classList.add('is-dim');
       note.hidden = false;
       note.textContent = 'Unavailable';
       note.title = station.error || 'No price published for this club.';
-    } else if (stale) {
+    } else if (isStale(station)) {
       card.classList.add('is-stale');
       note.hidden = false;
       note.textContent = 'Stale';
-      note.title = `Published ${fmtWhen(station.updatedAt)} and not refreshed since.`;
+      note.title = `Last confirmed ${fmtWhen(station.checkedAt)}. ${
+        station.error || 'The club page has not been read successfully since.'
+      }`;
     }
 
     // Built from the same split as the headline price rather than toFixed(2),
@@ -196,20 +201,25 @@ function renderCards() {
 }
 
 /**
- * One timestamp for the board. Every club publishes in the same nightly batch,
- * so the newest of them is the age of the whole set.
+ * One timestamp for the board: when these numbers were last confirmed against
+ * the club pages. The newest of the per-club times, because a club that failed
+ * keeps an older one and should not drag the whole headline back with it.
  *
- * "Prices from", not "last updated": this is when Sam's published, which moves
- * once a day. When the job last looked is a different question, and sits in the
- * footer rather than the headline.
+ * "Checked", not "prices from". This page cannot say when a price was set, only
+ * when it last read one, and claiming otherwise is the mistake that had the
+ * header reading 3:20 AM all day while the prices underneath it moved.
+ *
+ * The footer carries the job's own last run. Normally the two agree. When they
+ * do not, that gap is the fault: the schedule is firing, but some club is not
+ * coming back.
  */
 function renderUpdated() {
-  const times = state.stations.map((s) => s.updatedAt).filter(Boolean).sort();
-  const newest = times[times.length - 1] ?? null;
+  const times = state.stations.map((s) => s.checkedAt).filter(Boolean).sort();
+  const newest = times[times.length - 1] ?? state.fetchedAt ?? null;
 
   ui.updated.textContent = newest ? fmtWhen(newest) : '—';
-  ui.updated.classList.toggle('is-stale', state.stations.some((s) => isStale(s.updatedAt)));
-  ui.checked.textContent = state.fetchedAt ? `checked ${fmtWhen(state.fetchedAt)}` : '';
+  ui.updated.classList.toggle('is-stale', state.stations.some(isStale));
+  ui.checked.textContent = state.fetchedAt ? `last run ${fmtWhen(state.fetchedAt)}` : '';
 }
 
 // ---------------------------------------------------------------- loading

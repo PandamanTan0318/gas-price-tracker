@@ -9,11 +9,11 @@
 // log for free, which is why the JSON is pretty-printed. A one-line file would
 // make every diff useless.
 
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, appendFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { parseClubPage, mergeSnapshot } from '../src/fuel.js';
+import { parseClubPage, mergeSnapshot, pricesChanged } from '../src/fuel.js';
 import { STATIONS } from '../src/stations.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -104,6 +104,41 @@ for (const s of file.stations) {
     ? s.prices.map((p) => `${p.grade} ${p.price.toFixed(3)}`).join('  ')
     : '—';
   console.log(`${String(s.club).padEnd(6)} ${prices.padEnd(40)} ${s.error ?? ''}`);
+}
+
+// The commit message says what this run found, because every run commits now
+// and an undifferentiated log would hide the price changes among the checks.
+// A club with no previous reading is not a change; it is a first reading.
+
+const quote = (list) => list.map((p) => `${p.grade} ${p.price.toFixed(3)}`).join(' ');
+
+const changes = file.stations
+  .map((s) => ({ station: s, was: previous?.clubs?.[String(s.club)]?.prices }))
+  .filter(
+    ({ station, was }) =>
+      was?.length && station.prices.length && pricesChanged(was, station.prices)
+  );
+
+const stamp = `${file.fetchedAt.slice(0, 16).replace('T', ' ')} UTC`;
+
+const subject = !changes.length
+  ? `No change at ${stamp}`
+  : changes.length === 1
+    ? `Price change at ${changes[0].station.label} (${stamp})`
+    : `Price changes at ${changes.length} clubs (${stamp})`;
+
+const message = changes.length
+  ? `${subject}\n\n${changes
+      .map(({ station, was }) => `${station.label}: ${quote(was)} -> ${quote(station.prices)}`)
+      .join('\n')}`
+  : subject;
+
+console.log(`\n${message}`);
+
+if (process.env.GITHUB_OUTPUT) {
+  // Heredoc form, since the message runs to several lines when prices moved.
+  // The delimiter cannot collide: the body is club labels and numbers.
+  await appendFile(process.env.GITHUB_OUTPUT, `message<<PRICE_MSG_EOF\n${message}\nPRICE_MSG_EOF\n`);
 }
 
 // A round where every club failed is systemic, such as a blocked runner or a
