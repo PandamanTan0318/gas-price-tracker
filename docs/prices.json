@@ -1,28 +1,9 @@
 {
-  "fetchedAt": "2026-09-28T08:55:39.885Z",
+  "fetchedAt": "2026-09-28T20:44:08.798Z",
   "stations": [
     {
       "club": 4769,
       "label": "Galleria · S Rice Ave",
-      "prices": [
-        {
-          "grade": "Unleaded",
-          "gradeId": 11,
-          "price": 3.649
-        },
-        {
-          "grade": "Premium",
-          "gradeId": 16,
-          "price": 4.599
-        }
-      ],
-      "updatedAt": "2026-09-28T08:16:09.862Z",
-      "checkedAt": "2026-09-28T08:55:39.885Z",
-      "error": null
-    },
-    {
-      "club": 8274,
-      "label": "West Rd",
       "prices": [
         {
           "grade": "Unleaded",
@@ -32,11 +13,30 @@
         {
           "grade": "Premium",
           "gradeId": 16,
-          "price": 4.299
+          "price": 4.559
+        }
+      ],
+      "updatedAt": "2026-09-28T08:16:09.862Z",
+      "checkedAt": "2026-09-28T20:44:08.798Z",
+      "error": null
+    },
+    {
+      "club": 8274,
+      "label": "West Rd",
+      "prices": [
+        {
+          "grade": "Unleaded",
+          "gradeId": 11,
+          "price": 3.639
+        },
+        {
+          "grade": "Premium",
+          "gradeId": 16,
+          "price": 4.199
         }
       ],
       "updatedAt": "2026-09-28T08:16:09.833Z",
-      "checkedAt": "2026-09-28T08:55:39.885Z",
+      "checkedAt": "2026-09-28T20:44:08.798Z",
       "error": null
     },
     {
@@ -51,11 +51,11 @@
         {
           "grade": "Premium",
           "gradeId": 16,
-          "price": 4.199
+          "price": 4.129
         }
       ],
       "updatedAt": "2026-09-28T08:16:11.929Z",
-      "checkedAt": "2026-09-28T08:55:39.885Z",
+      "checkedAt": "2026-09-28T20:44:08.798Z",
       "error": null
     },
     {
@@ -70,11 +70,11 @@
         {
           "grade": "Premium",
           "gradeId": 16,
-          "price": 4.679
+          "price": 4.649
         }
       ],
       "updatedAt": "2026-09-28T08:16:06.094Z",
-      "checkedAt": "2026-09-28T08:55:39.885Z",
+      "checkedAt": "2026-09-28T20:44:08.798Z",
       "error": null
     }
   ]
