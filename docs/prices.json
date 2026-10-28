@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-10-28T08:56:02.755Z",
+  "fetchedAt": "2026-10-28T19:49:51.512Z",
   "stations": [
     {
       "club": 4769,
@@ -13,11 +13,11 @@
         {
           "grade": "Premium",
           "gradeId": 16,
-          "price": 4.469
+          "price": 4.519
         }
       ],
       "updatedAt": "2026-10-28T08:17:07.657480571Z",
-      "checkedAt": "2026-10-28T08:56:02.755Z",
+      "checkedAt": "2026-10-28T19:49:51.512Z",
       "error": null
     },
     {
@@ -27,16 +27,16 @@
         {
           "grade": "Unleaded",
           "gradeId": 11,
-          "price": 3.299
+          "price": 3.349
         },
         {
           "grade": "Premium",
           "gradeId": 16,
-          "price": 3.839
+          "price": 3.889
         }
       ],
       "updatedAt": "2026-10-28T08:17:07.625661325Z",
-      "checkedAt": "2026-10-28T08:56:02.755Z",
+      "checkedAt": "2026-10-28T19:49:51.512Z",
       "error": null
     },
     {
@@ -46,16 +46,16 @@
         {
           "grade": "Unleaded",
           "gradeId": 11,
-          "price": 3.359
+          "price": 3.399
         },
         {
           "grade": "Premium",
           "gradeId": 16,
-          "price": 3.869
+          "price": 3.919
         }
       ],
       "updatedAt": "2026-10-28T08:17:10.086336487Z",
-      "checkedAt": "2026-10-28T08:56:02.755Z",
+      "checkedAt": "2026-10-28T19:49:51.512Z",
       "error": null
     },
     {
@@ -74,7 +74,7 @@
         }
       ],
       "updatedAt": "2026-10-28T08:17:03.486439826Z",
-      "checkedAt": "2026-10-28T08:56:02.755Z",
+      "checkedAt": "2026-10-28T19:49:51.512Z",
       "error": null
     }
   ]
