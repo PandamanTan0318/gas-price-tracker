@@ -1,66 +1,9 @@
 {
-  "fetchedAt": "2026-11-03T09:58:34.136Z",
+  "fetchedAt": "2026-11-03T20:35:35.674Z",
   "stations": [
     {
       "club": 4769,
       "label": "Galleria · S Rice Ave",
-      "prices": [
-        {
-          "grade": "Unleaded",
-          "gradeId": 11,
-          "price": 3.459
-        },
-        {
-          "grade": "Premium",
-          "gradeId": 16,
-          "price": 4.399
-        }
-      ],
-      "updatedAt": "2026-11-03T09:17:21.606832906Z",
-      "checkedAt": "2026-11-03T09:58:34.136Z",
-      "error": null
-    },
-    {
-      "club": 8274,
-      "label": "West Rd",
-      "prices": [
-        {
-          "grade": "Unleaded",
-          "gradeId": 11,
-          "price": 3.299
-        },
-        {
-          "grade": "Premium",
-          "gradeId": 16,
-          "price": 3.799
-        }
-      ],
-      "updatedAt": "2026-11-03T09:17:21.578100498Z",
-      "checkedAt": "2026-11-03T09:58:34.136Z",
-      "error": null
-    },
-    {
-      "club": 8246,
-      "label": "Stafford · SW Fwy",
-      "prices": [
-        {
-          "grade": "Unleaded",
-          "gradeId": 11,
-          "price": 3.339
-        },
-        {
-          "grade": "Premium",
-          "gradeId": 16,
-          "price": 3.849
-        }
-      ],
-      "updatedAt": "2026-11-03T09:17:23.457767791Z",
-      "checkedAt": "2026-11-03T09:58:34.136Z",
-      "error": null
-    },
-    {
-      "club": 6338,
-      "label": "College Station",
       "prices": [
         {
           "grade": "Unleaded",
@@ -73,8 +16,65 @@
           "price": 4.299
         }
       ],
+      "updatedAt": "2026-11-03T09:17:21.606832906Z",
+      "checkedAt": "2026-11-03T20:35:35.674Z",
+      "error": null
+    },
+    {
+      "club": 8274,
+      "label": "West Rd",
+      "prices": [
+        {
+          "grade": "Unleaded",
+          "gradeId": 11,
+          "price": 3.269
+        },
+        {
+          "grade": "Premium",
+          "gradeId": 16,
+          "price": 3.769
+        }
+      ],
+      "updatedAt": "2026-11-03T09:17:21.578100498Z",
+      "checkedAt": "2026-11-03T20:35:35.674Z",
+      "error": null
+    },
+    {
+      "club": 8246,
+      "label": "Stafford · SW Fwy",
+      "prices": [
+        {
+          "grade": "Unleaded",
+          "gradeId": 11,
+          "price": 3.329
+        },
+        {
+          "grade": "Premium",
+          "gradeId": 16,
+          "price": 3.829
+        }
+      ],
+      "updatedAt": "2026-11-03T09:17:23.457767791Z",
+      "checkedAt": "2026-11-03T20:35:35.674Z",
+      "error": null
+    },
+    {
+      "club": 6338,
+      "label": "College Station",
+      "prices": [
+        {
+          "grade": "Unleaded",
+          "gradeId": 11,
+          "price": 3.379
+        },
+        {
+          "grade": "Premium",
+          "gradeId": 16,
+          "price": 4.249
+        }
+      ],
       "updatedAt": "2026-11-03T09:17:18.213787478Z",
-      "checkedAt": "2026-11-03T09:58:34.136Z",
+      "checkedAt": "2026-11-03T20:35:35.674Z",
       "error": null
     }
   ]
